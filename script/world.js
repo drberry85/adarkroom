@@ -66,11 +66,23 @@ var World = {
 			damage: 6,
 			cooldown: 2
 		},
+        'katana': {
+			verb: _('draw'),
+			type: 'melee',
+			damage: 8,
+			cooldown: 2
+		},
 		'bayonet': {
 			verb: _('thrust'),
 			type: 'melee',
 			damage: 8,
 			cooldown: 2
+		},
+        'lightsaber': {
+			verb: _('Vrau'),
+			type: 'melee',
+			damage: 20,
+			cooldown: 0.1
 		},
 		'rifle': {
 			verb: _('shoot'),
@@ -268,9 +280,9 @@ var World = {
 			total += num * Path.getWeight(k);
 			if(num > 0 && item.length === 0) {
 				item = World.createItemDiv(k, num);
-				if(k == 'cured meat' && World.water > 0) {
+				if((k == 'cured meat' || k == 'smoked fish' || k == 'meat') && World.water > 0) {
 					item.insertAfter(water);
-				} else if(k == 'cured meat') {
+				} else if(k == 'cured meat' || k == 'smoked fish' || k == 'meat') {
 					item.prependTo(supplies);
 				} else {
 					item.appendTo(supplies);
@@ -448,7 +460,13 @@ var World = {
 		movesPerFood *= $SM.hasPerk('slow metabolism') ? 2 : 1;
 		if(World.foodMove >= movesPerFood) {
 			World.foodMove = 0;
-			var num = Path.outfit['cured meat'];
+            var food = 'cured meat';
+            if (!('cured meat' in Path.outfit)) Path.outfit['cured meat'] = 0;
+            if ('smoked fish' in Path.outfit)
+                if (Path.outfit['smoked fish'] > Path.outfit[food]) food = 'smoked fish';
+            if ('meat' in Path.outfit)
+                if (Path.outfit['meat'] > Path.outfit[food]) food = 'meat';
+			var num = Path.outfit[food];
 			num--;
 			if(num === 0) {
 				Notifications.notify(World, _('the meat has run out'));
@@ -471,7 +489,7 @@ var World = {
 				World.starvation = false;
 				World.setHp(World.health + World.meatHeal());
 			}
-			Path.outfit['cured meat'] = num;
+			Path.outfit[food] = num;
 		}
 		// Water
 		var movesPerWater = World.MOVES_PER_WATER;
@@ -902,6 +920,7 @@ var World = {
 	},
 
 	goHome: function() {
+        Engine.log("Going Home");
 		// Home safe! Commit the changes.
 		$SM.setM('game.world', World.state);
 		World.testMap();
@@ -924,11 +943,16 @@ var World = {
 		}
 		World.state = null;
 
-		if(Path.outfit['cured meat'] > 0) {
-			Button.setDisabled($('#embarkButton'), false);
-		}
-
+        Engine.log("Food Check");
+        if ('cured meat' in Path.outfit)
+            if (Path.outfit['cured meat'] > 0) Button.setDisabled($('#embarkButton'), false);
+        if ('smoked fish' in Path.outfit)
+            if (Path.outfit['smoked fish'] > 0) Button.setDisabled($('#embarkButton'), false);
+        if ('meat' in Path.outfit)
+            if (Path.outfit['meat'] > 0) Button.setDisabled($('#embarkButton'), false);
+        
 		for(var k in Path.outfit) {
+            Engine.log("k: "+k+" stores[k]: "+stores[k]);
 			$SM.add('stores["'+k+'"]', Path.outfit[k]);
 			if(World.leaveItAtHome(k)) {
 				Path.outfit[k] = 0;
@@ -939,15 +963,18 @@ var World = {
 		Engine.activeModule = Path;
 		Path.onArrival();
 		Engine.restoreNavigation = true;
+        Engine.log("Made It!");
 	},
 
 	leaveItAtHome: function(thing) {
-		 return thing != 'cured meat' && thing != 'bullets' && thing != 'energy cell'  && thing != 'charm' && thing != 'medicine' &&
+		 return thing != 'cured meat' && thing != 'smoked fish' && thing != 'meat' && thing != 'bullets' && thing != 'energy cell'  && thing != 'charm' && thing != 'medicine' &&
 		 typeof World.Weapons[thing] == 'undefined' && typeof Room.Craftables[thing] == 'undefined';
 	},
 
 	getMaxHealth: function() {
-		if($SM.get('stores["s armour"]', true) > 0) {
+        if($SM.get('stores["a armour"]', true) > 0) {
+            return World.BASE_HEALTH + 70;
+		} else if($SM.get('stores["s armour"]', true) > 0) {
 			return World.BASE_HEALTH + 35;
 		} else if($SM.get('stores["i armour"]', true) > 0) {
 			return World.BASE_HEALTH + 15;
@@ -965,7 +992,9 @@ var World = {
 	},
 
 	getMaxWater: function() {
-		if($SM.get('stores["water tank"]', true) > 0) {
+		if($SM.get('stores.condenser', true) > 0) {
+			return World.BASE_WATER + 90;
+		} else if($SM.get('stores["water tank"]', true) > 0) {
 			return World.BASE_WATER + 50;
 		} else if($SM.get('stores.cask', true) > 0) {
 			return World.BASE_WATER + 20;

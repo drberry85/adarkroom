@@ -1764,8 +1764,8 @@ Events.Setpieces = {
 					},
 					'alien alloy': {
 						min: 1,
-						max: 1,
-						chance: 0.01
+						max: 5,
+						chance: 0.1
 					},
 					'medicine': {
 						min: 1,
@@ -1984,8 +1984,8 @@ Events.Setpieces = {
 					},
 					'alien alloy': {
 						min: 1,
-						max: 1,
-						chance: 0.01
+						max: 5,
+						chance: 0.1
 					},
 					'cloth': {
 						min: 1,
@@ -2354,7 +2354,7 @@ Events.Setpieces = {
 					},
 					'alien alloy': {
 						min: 1,
-						max: 1,
+						max: 5,
 						chance: 0.5
 					}
 				},
@@ -2431,7 +2431,7 @@ Events.Setpieces = {
 					},
 					'alien alloy': {
 						min: 1,
-						max: 1,
+						max: 5,
 						chance: 0.3
 					}
 				},
@@ -2656,7 +2656,7 @@ Events.Setpieces = {
 					},
 					'alien alloy': {
 						min: 1,
-						max: 1,
+						max: 5,
 						chance: 0.2
 					}
 				},
@@ -2781,7 +2781,7 @@ Events.Setpieces = {
 					},
 					'alien alloy': {
 					min: 1,
-					max: 2,
+					max: 5,
 					chance: 0.8
 					}
 				},
@@ -2826,7 +2826,7 @@ Events.Setpieces = {
 					},
 					'alien alloy': {
 					min: 1,
-					max: 1,
+					max: 5,
 					chance: 0.1
 					}
 				},
@@ -2872,7 +2872,7 @@ Events.Setpieces = {
 					},
 					'alien alloy': {
 						min: 1,
-						max: 1,
+						max: 5,
 						chance: 0.3
 					}
 				},
@@ -2896,7 +2896,7 @@ Events.Setpieces = {
 				loot: {
 					'alien alloy': {
 						min: 1,
-						max: 1,
+						max: 5,
 						chance: 0.8
 					},
 					'medicine': {
@@ -3086,7 +3086,7 @@ Events.Setpieces = {
 					},
 					'alien alloy': {
 						min: 1,
-						max: 1,
+						max: 5,
 						chance: 0.3
 					}
 				},
@@ -3114,8 +3114,8 @@ Events.Setpieces = {
 				},
 				loot: {
 					'alien alloy': {
-						min: 1,
-						max: 3,
+						min: 10,
+						max: 20,
 						chance: 1
 					}
 				},

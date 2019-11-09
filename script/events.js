@@ -226,17 +226,24 @@ var Events = {
 			cooldown = Events._EAT_COOLDOWN;
 		}
 
+        var food = 'cured meat';
+        if ('smoked fish' in Path.outfit) {
+            if (Path.outfit['smoked fish'] > Path.outfit['cured meat']) food = 'smoked fish';
+        }
+
 		var btn = new Button.Button({
 			id: 'eat',
-			text: _('eat meat'),
+			text: _('eat food'),
 			cooldown: cooldown,
 			click: Events.eatMeat,
-			cost: { 'cured meat': 1 }
+			cost: { food: 1 }
 		});
 
-		if(Path.outfit['cured meat'] === 0) {
-			Button.setDisabled(btn, true);
-		}
+        if ('smoked fish' in Path.outfit) {
+            if(Path.outfit['cured meat'] === 0 && Path.outfit['smoked fish'] === 0) Button.setDisabled(btn, true);
+		} else {
+            if(Path.outfit['cured meat'] === 0) Button.setDisabled(btn, true);
+        }
 
 		return btn;
 	},
@@ -264,8 +271,8 @@ var Events = {
 	createAttackButton: function(weaponName) {
 		var weapon = World.Weapons[weaponName];
 		var cd = weapon.cooldown;
-		if(weapon.type == 'unarmed') {
-			if($SM.hasPerk('unarmed master')) {
+		if(weapon.type == 'unarmed' || weapon.type == 'melee') {
+			if($SM.hasPerk('martial arts master')) {
 				cd /= 2;
 			}
 		}
@@ -318,9 +325,11 @@ var Events = {
 		if(Path.outfit[healing] > 0) {
 			Path.outfit[healing]--;
 			World.updateSupplies();
-			if(Path.outfit[healing] === 0) {
-				Button.setDisabled(btn, true);
-			}
+            if ('smoked fish' in Path.outfit) {
+			    if(Path.outfit['cured meat'] === 0 && Path.outfit['smoked fish'] === 0) Button.setDisabled(btn, true);
+            } else {
+                if(Path.outfit['cured meat'] === 0) Button.setDisabled(btn, true);
+            }
 
 			var hp = World.health + cured;
 			hp = Math.min(World.getMaxHealth(),hp);
@@ -339,7 +348,14 @@ var Events = {
 	},
 
 	eatMeat: function(btn) {
-		Events.doHeal('cured meat', World.meatHeal(), btn);
+        food = 'cured meat'
+        if ('smoked fish' in Path.outfit) {
+            if (Path.outfit['smoked fish'] > Path.outfit[food]) {
+                food = 'smoked fish';
+                btn.cost = { 'smoked fish': 1 };
+            }
+        } else btn.cost = { 'cured meat': 1 };
+		Events.doHeal(food, World.meatHeal(), btn);
 	},
 
 	useMeds: function(btn) {
@@ -353,12 +369,12 @@ var Events = {
 			if(weapon.type == 'unarmed') {
 				if(!$SM.get('character.punches')) $SM.set('character.punches', 0);
 				$SM.add('character.punches', 1);
-				if($SM.get('character.punches') == 50 && !$SM.hasPerk('boxer')) {
+				if($SM.get('character.punches') == 25 && !$SM.hasPerk('boxer')) {
 					$SM.addPerk('boxer');
-				} else if($SM.get('character.punches') == 150 && !$SM.hasPerk('martial artist')) {
+				} else if($SM.get('character.punches') == 100 && !$SM.hasPerk('martial artist')) {
 					$SM.addPerk('martial artist');
-				} else if($SM.get('character.punches') == 300 && !$SM.hasPerk('unarmed master')) {
-					$SM.addPerk('unarmed master');
+				} else if($SM.get('character.punches') == 250 && !$SM.hasPerk('martial arts master')) {
+					$SM.addPerk('martial arts master');
 				}
 
 			}
@@ -405,13 +421,13 @@ var Events = {
 					if(weapon.type == 'unarmed' && $SM.hasPerk('boxer')) {
 						dmg *= 2;
 					}
-					if(weapon.type == 'unarmed' && $SM.hasPerk('martial artist')) {
-						dmg *= 3;
-					}
-					if(weapon.type == 'unarmed' && $SM.hasPerk('unarmed master')) {
+					if((weapon.type == 'unarmed' || weapon.type == 'melee') && $SM.hasPerk('martial artist')) {
 						dmg *= 2;
 					}
-					if(weapon.type == 'melee' && $SM.hasPerk('barbarian')) {
+					if((weapon.type == 'unarmed' || weapon.type == 'melee') && $SM.hasPerk('martial arts master')) {
+						dmg *= 3;
+					}
+					if((weapon.type == 'unarmed' || weapon.type == 'melee') && $SM.hasPerk('barbarian')) {
 						dmg = Math.floor(dmg * 1.5);
 					}
 				}

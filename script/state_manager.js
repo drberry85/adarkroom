@@ -173,6 +173,29 @@ var StateManager = {
 		else return whichState;
 	},
 
+    getItems: function(list) {
+        var itemsum = 0
+        for (var index in list) {
+            itemsum += $SM.get('stores["'+list[index]+'"]', true);
+        }
+        return itemsum;
+	},
+
+    getFood: function() {
+        var foodlist = ['bread', 'forage', 'fish', 'meat', 'smoked fish', 'cured meat'];
+        return $SM.getItems(foodlist);
+	},
+
+    getNotCuredFood: function() {
+        var foodlist = ['bread', 'forage', 'fish', 'meat'];
+        return $SM.getItems(foodlist);
+	},
+
+    getCuredFood: function() {
+        var foodlist = ['smoked fish', 'cured meat'];
+        return $SM.getItems(foodlist);
+	},
+
 	//mainly for local copy use, add(M) can fail so we can't shortcut them
 	//since set does not fail, we know state exists and can simply return the object
 	setget: function(stateName, value, noEvent){
@@ -350,8 +373,12 @@ var StateManager = {
 
 	collectIncome: function() {
 		var changed = false;
+        var game_eaten = {}
+        if(typeof $SM.get('game.eaten') != 'undefined') game_eaten = $SM.get('game.eaten');
 		if(typeof $SM.get('income') != 'undefined' && Engine.activeModule != Space) {
 			for(var source in $SM.get('income')) {
+                if (source == 'eaten') continue;
+                var eaten = {}
 				var income = $SM.get('income["'+source+'"]');
 				if(typeof income.timeLeft != 'number')
 				{
@@ -363,11 +390,26 @@ var StateManager = {
 					Engine.log('collection income from ' + source);
 					if(source == 'thieves') $SM.addStolen(income.stores);
 
-					var cost = income.stores;
+					//var cost = income.stores;
+                    let cost = JSON.parse(JSON.stringify(income.stores));
+                    for (var key in cost) cost[key] = Number((cost[key]).toFixed(1));
 					var ok = true;
+                    var totalfood = $SM.getFood();
+                    var totalfoodcost = $SM.get('income["'+source+'"].stores.food', true) +
+                        $SM.get('income["'+source+'"].stores["forage"]', true) +
+                        $SM.get('income["'+source+'"].stores["meat"]', true) +
+                        $SM.get('income["'+source+'"].stores["fish"]', true) +
+                        $SM.get('income["'+source+'"].stores["bread"]', true) +
+                        $SM.get('income["'+source+'"].stores["cured meat"]', true) +
+                        $SM.get('income["'+source+'"].stores["smoked fish"]', true) +
+                        $SM.get('income["'+source+'"].stores["cured food"]', true);
+                    if (totalfood + totalfoodcost < 0) ok = false;
 					if (source != 'thieves') {
 						for (var k in cost) {
-							var have = $SM.get('stores["' + k + '"]', true);
+                            if (k == 'food') var have = totalfood;
+                            else if (k == 'cured food')var have = $SM.getCuredFood();
+                            else var have = $SM.get('stores["' + k + '"]', true);
+                            Engine.log("Initial Cost: Key " + k + " " + cost[k] + ' Have: ' + have);
 							if (have + cost[k] < 0) {
 								ok = false;
 								break;
@@ -376,15 +418,127 @@ var StateManager = {
 					}
 
 					if(ok){
-						$SM.addM('stores', income.stores, true);
+                        
+                        if (cost.hasOwnProperty('food') || cost.hasOwnProperty('cured food')) {
+
+                            //Engine.log('Allocating Food');
+                            var foodcost = $SM.get('income["'+source+'"].stores.food', true);
+                            var perishablefood = $SM.getNotCuredFood();
+                            var missingfood = perishablefood + foodcost;
+
+                            var foodlist = []
+                            if (Boolean($SM.get('stores["bread"]'))) foodlist.push("bread");
+                            if (Boolean($SM.get('stores["forage"]'))) foodlist.push("forage");
+                            if (Boolean($SM.get('stores["fish"]'))) foodlist.push("fish");
+                            if (Boolean($SM.get('stores["meat"]'))) foodlist.push("meat");
+
+                            var curedfoodcost = $SM.get('income["'+source+'"].stores["cured food"]', true);
+                            var curedfood = $SM.getCuredFood();
+                            var curedfoodlist = []
+                            if (Boolean($SM.get('stores["smoked fish"]'))) curedfoodlist.push("smoked fish");
+                            if (Boolean($SM.get('stores["cured meat"]'))) curedfoodlist.push("cured meat");
+
+                            //Engine.log('PerishableFood: ' + perishablefood + ' foodcost: ' + foodcost);
+                            //Engine.log('CuredFood: ' + curedfood + ' curedfoodcost: ' + curedfoodcost);
+                            //for (var ifood = 0; ifood < foodlist.length; ifood++) Engine.log('foodlist[' + ifood +']: ' + foodlist[ifood]);
+                            //for (var ifood = 0; ifood < curedfoodlist.length; ifood++) Engine.log('curedfoodlist[' + ifood + ']: ' + curedfoodlist[ifood]);
+
+                            var foodvalue = {};
+                            //Engine.log('foodcost: ' + foodcost + ' missingfood: ' + missingfood);
+                            if (missingfood <= 0) {
+                                for (var ifood = 0; ifood < foodlist.length; ifood++)
+                                    foodvalue[foodlist[ifood]]  = $SM.get('stores["' + foodlist[ifood] + '"]', true);
+                            } else {
+                                for (var food_cnt = 0; food_cnt < Math.abs(foodcost); food_cnt++) {
+                                    if (food_cnt < foodlist.length) foodvalue[foodlist[food_cnt]] = 0;
+                                    var food_index = food_cnt % foodlist.length;
+                                    for (var ifood = 0; ifood < foodlist.length; ifood++) {
+                                        food_index = (food_index + ifood) % foodlist.length;
+                                        var foodname = foodlist[food_index];
+                                        var storedfood = $SM.get('stores["' + foodname + '"]', true);
+                                        if (foodname in cost) {
+                                            //Engine.log('foodvalue[' + foodname + ']: ' + foodvalue[foodname] + ' cost[foodname] ' + cost[foodname] + ' storedfood: ' + storedfood);
+                                            storedfood += cost[foodname]
+                                        } else {
+                                            //Engine.log('foodvalue[' + foodname + ']: ' + foodvalue[foodname] + ' storedfood: ' + storedfood);
+                                        }
+                                        if (foodvalue[foodname] < storedfood) {
+                                            foodvalue[foodname]++;
+                                            //Engine.log('foodvalue[' + foodname + ']: ' + foodvalue[foodname]);
+                                            break;
+                                        }
+                                    }
+                                }
+                                //for (var key in foodvalue) Engine.log("key: " + key + " foodvalue: " + foodvalue[key])
+                            }
+                            
+                            var curedfoodvalue = {};
+                            if (missingfood < 0) curedfoodcost += missingfood;
+                            //Engine.log('curedfoodcost: ' + curedfoodcost + ' missingfood: ' + missingfood);
+                            for (var food_cnt = 0; food_cnt < Math.abs(curedfoodcost); food_cnt++) {
+                                if (food_cnt < curedfoodlist.length) curedfoodvalue[curedfoodlist[food_cnt]] = 0;
+                                var food_index = food_cnt % curedfoodlist.length;
+                                for (var ifood = 0; ifood < curedfoodlist.length; ifood++) {
+                                    food_index = (food_index + ifood) % curedfoodlist.length;
+                                    var foodname = curedfoodlist[food_index];
+                                    var storedfood = $SM.get('stores["' + foodname + '"]', true);
+                                    if (foodname in cost) {
+                                        //Engine.log('foodvalue[' + foodname + ']: ' + curedfoodvalue[foodname] + ' cost[foodname] ' + cost[foodname] + ' storedfood: ' + storedfood);
+                                        storedfood += cost[foodname]
+                                    } else {
+                                        //Engine.log('foodvalue[' + foodname + ']: ' + curedfoodvalue[foodname] + ' storedfood: ' + storedfood);
+                                    }
+                                    if (foodname in cost) storedfood += cost[foodname]
+                                    if (curedfoodvalue[foodname] < storedfood) {
+                                        curedfoodvalue[foodname]++;
+                                        break;
+                                    }
+                                }
+                            }
+                            //for (var key in curedfoodvalue) Engine.log("key: " + key + " curedfoodvalue: " + curedfoodvalue[key])
+
+                            for (var key in foodvalue) {
+                                if (key in cost) cost[key] -= foodvalue[key];
+                                else cost[key] = -foodvalue[key];
+                                if (key in eaten) eaten[key] -= foodvalue[key];
+                                else eaten[key] = -foodvalue[key]
+                            }
+                            for (var key in curedfoodvalue) {
+                                if (key in cost) cost[key] -= curedfoodvalue[key];
+                                else cost[key] = -curedfoodvalue[key];
+                                if (key in eaten) eaten[key] -= curedfoodvalue[key];
+                                else eaten[key] = -curedfoodvalue[key]
+                            }
+                            delete cost["cured food"];
+                            delete cost["food"];
+                        }
+                        game_eaten[source] = eaten;
+
+
+                        for (var key in eaten) Engine.log("eaten: " + key + " " + eaten[key]);
+                        for (var key in cost) Engine.log("Final Cost: " + key + " " + cost[key]);
+                        //for (var key in income.stores) Engine.log('key: ' + key + ' income.stores[key] ' + income.stores[key]);
+                        $SM.addM('stores', cost, true);
 					}
 					changed = true;
 					if(typeof income.delay == 'number') {
 						income.timeLeft = income.delay;
 					}
-				}
-			}
+                    //for (var key in income.stores) Engine.log('key: ' + key + ' income.stores[key] ' + income.stores[key]);
+                }
+            }
 		}
+        eaten_sum = {};
+        for (source in game_eaten) {
+            for (key in game_eaten[source]) {
+                if (key in eaten_sum) eaten_sum[key] += game_eaten[source][key];
+                else eaten_sum[key] = game_eaten[source][key];
+            }
+        }
+        $SM.set('game.eaten', game_eaten);
+        $SM.set('game.eatensum', eaten_sum);
+        $SM.setIncome('eaten', {delay: 10, stores: $SM.get('game.eatensum')});
+        for (key in eaten_sum) Engine.log('key: ' + key + ' eaten_sum[' + key + ']: ' + eaten_sum[key]);
 		if(changed){
 			$SM.fireUpdate('income', true);
 		}

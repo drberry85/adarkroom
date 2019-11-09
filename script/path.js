@@ -7,6 +7,7 @@ var Path = {
 		'bone spear': 2,
 		'iron sword': 3,
 		'steel sword': 5,
+        'katana': 3,
 		'rifle': 5,
 		'bullets': 0.1,
 		'energy cell': 0.2,
@@ -68,10 +69,12 @@ var Path = {
 	},
 	
 	getCapacity: function() {
-		if($SM.get('stores.convoy', true) > 0) {
-			return Path.DEFAULT_BAG_SPACE + 60;
+        if($SM.get('stores["bag of holding"]', true) > 0) {
+			return Path.DEFAULT_BAG_SPACE + 140;
+		} else if($SM.get('stores.convoy', true) > 0) {
+			return Path.DEFAULT_BAG_SPACE + 90;
 		} else if($SM.get('stores.wagon', true) > 0) {
-			return Path.DEFAULT_BAG_SPACE + 30;
+			return Path.DEFAULT_BAG_SPACE + 50;
 		} else if($SM.get('stores.rucksack', true) > 0) {
 			return Path.DEFAULT_BAG_SPACE + 10;
 		}
@@ -130,7 +133,9 @@ var Path = {
 		
 		// Add the armour row
 		var armour = _("none");
-		if($SM.get('stores["s armour"]', true) > 0)
+        if($SM.get('stores["a armour"]', true) > 0)
+            armour = _("alien");
+		else if($SM.get('stores["s armour"]', true) > 0)
 			armour = _("steel");
 		else if($SM.get('stores["i armour"]', true) > 0)
 			armour = _("iron");
@@ -162,6 +167,8 @@ var Path = {
 		// Add the non-craftables to the craftables
 		var carryable = $.extend({
 			'cured meat': { type: 'tool', desc: 'restores '+ World.MEAT_HEAL + ' hp' },
+			'smoked fish': { type: 'tool', desc: 'restores '+ World.MEAT_HEAL + ' hp' },
+            'meat': { type: 'tool', desc: 'food' },
 			'bullets': { type: 'tool', desc: 'use with rifle' },
 			'grenade': {type: 'weapon' },
 			'bolas': {type: 'weapon' },
@@ -235,10 +242,12 @@ var Path = {
 		// Update bagspace
 		$('#bagspace').text(_('free {0}/{1}', Math.floor(Path.getCapacity() - currentBagCapacity) , Path.getCapacity()));
 
-		if(Path.outfit['cured meat'] > 0) {
-			Button.setDisabled($('#embarkButton'), false);
-		} else {
-			Button.setDisabled($('#embarkButton'), true);
+        if ('cured fish' in Path.outfit) {
+		    if(Path.outfit['cured meat'] > 0 || Path.outfit['smoked fish'] > 0) Button.setDisabled($('#embarkButton'), false);
+            else Button.setDisabled($('#embarkButton'), true);
+        } else {
+		    if(Path.outfit['cured meat'] > 0) Button.setDisabled($('#embarkButton'), false);
+            else Button.setDisabled($('#embarkButton'), true);
 		}
 
 	},
@@ -306,6 +315,7 @@ var Path = {
 		Path.updatePerks(true);
 
 		Engine.moveStoresView($('#perks'), transition_diff);
+        
 	},
 	
 	setTitle: function() {
@@ -314,7 +324,9 @@ var Path = {
 	
 	embark: function() {
 		for(var k in Path.outfit) {
+            Engine.log("k: "+k+" Path.outfit[k]"+Path.outfit[k])
 			$SM.add('stores["'+k+'"]', -Path.outfit[k]);
+            Engine.log("k: "+k+" $SM.stores[k]: "+$SM.get('stores["'+k+'"]'));
 		}
 		World.onArrival();
 		$('#outerSlider').animate({left: '-700px'}, 300);

@@ -20,13 +20,13 @@
 			'martial artist': {
 				name: _('martial artist'),
 				desc: _('punches do even more damage.'),
-				notify: _('learned to fight quite effectively without weapons')
+				notify: _('learned to fight quite effectively')
 			},
-			'unarmed master': {
+			'martial arts master': {
 				/// TRANSLATORS : master of unarmed combat
-				name: _('unarmed master'),
-				desc: _('punch twice as fast, and with even more force'),
-				notify: _('learned to strike faster without weapons')
+				name: _('martial arts master'),
+				desc: _('strike twice as fast, and with even more force'),
+				notify: _('learned to strike faster')
 			},
 			'barbarian': {
 				name: _('barbarian'),
@@ -73,7 +73,7 @@
 		options: {
 			state: null,
 			debug: false,
-			log: false,
+			log: true,
 			dropbox: false,
 			doubleTime: false
 		},

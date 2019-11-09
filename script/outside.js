@@ -5,8 +5,10 @@ var Outside = {
 	name: _("Outside"),
 	
 	_STORES_OFFSET: 0,
-	_GATHER_DELAY: 60,
-	_TRAPS_DELAY: 90,
+	_GATHER_DELAY: 40,
+	_FORAGE_DELAY: 60,
+	_TRAPS_DELAY: 80,
+	_BRICK_DELAY: 100,
 	_POP_DELAY: [0.5, 3],
 	_HUT_ROOM: 4,
 	
@@ -15,6 +17,7 @@ var Outside = {
 			name: _('gatherer'),
 			delay: 10,
 			stores: {
+                'food': -1,
 				'wood': 1
 			}
 		},
@@ -22,14 +25,15 @@ var Outside = {
 			name: _('hunter'),
 			delay: 10,
 			stores: {
-				'fur': 0.5,
-				'meat': 0.5
+				'meat': 1.0,
+				'fur': 0.5
 			}
 		},
 		'trapper': {
 			name: _('trapper'),
 			delay: 10,
 			stores: {
+				'food': -1,
 				'meat': -1,
 				'bait': 1
 			}
@@ -38,7 +42,8 @@ var Outside = {
 			name: _('tanner'),
 			delay: 10,
 			stores: {
-				'fur': -5,
+				'food': -1,
+				'fur': -2,
 				'leather': 1
 			}
 		},
@@ -46,16 +51,43 @@ var Outside = {
 			name: _('charcutier'),
 			delay: 10,
 			stores: {
-				'meat': -5,
-				'wood': -5,
+				'food': -1,
+				'meat': -1,
+				'wood': -2,
 				'cured meat': 1
+			}
+		},
+		'smoker': {
+			name: _('smoker'),
+			delay: 10,
+			stores: {
+				'food': -1,
+				'fish': -1,
+				'wood': -2,
+				'smoked fish': 1
+			}
+		},
+        'gardener': {
+			name: _('gardener'),
+			delay: 10,
+			stores: {
+				'forage': 2
+			}
+		},
+		'brickmaker': {
+			name: _('brickmaker'),
+			delay: 10,
+			stores: {
+				'food': -1,
+				'wood': -2,
+				'brick': 1
 			}
 		},
 		'iron miner': {
 			name: _('iron miner'),
 			delay: 10,
 			stores: {
-				'cured meat': -1,
+				'cured food': -1,
 				'iron': 1
 			}
 		},
@@ -63,7 +95,7 @@ var Outside = {
 			name: _('coal miner'),
 			delay: 10,
 			stores: {
-				'cured meat': -1,
+				'cured food': -1,
 				'coal': 1
 			}
 		},
@@ -71,7 +103,7 @@ var Outside = {
 			name: _('sulphur miner'),
 			delay: 10,
 			stores: {
-				'cured meat': -1,
+				'cured food': -1,
 				'sulphur': 1
 			}
 		},
@@ -79,6 +111,7 @@ var Outside = {
 			name: _('steelworker'),
 			delay: 10,
 			stores: {
+				'food': -1,
 				'iron': -1,
 				'coal': -1,
 				'steel': 1
@@ -88,16 +121,70 @@ var Outside = {
 			name: _('armourer'),
 			delay: 10,
 			stores: {
+				'food': -1,
 				'steel': -1,
 				'sulphur': -1,
 				'bullets': 1
+			}
+		},
+        'farmer': {
+			name: _('farmer'),
+			delay: 10,
+			stores: {
+				'wheat': 1
+			}
+		},
+        'miller': {
+			name: _('miller'),
+			delay: 10,
+			stores: {
+				'food': -1,
+                'wheat': -1,
+				'flour': 2
+			}
+		},
+        'baker': {
+			name: _('baker'),
+			delay: 10,
+			stores: {
+                'food': -1,
+				'wood': -2,
+                'flour': -1,
+				'bread': 5
+			}
+		},
+        'woodcutter': {
+			name: _('woodcutter'),
+			delay: 10,
+			stores: {
+				'wood': 5,
+				'cured food': -1
+			}
+		},
+        'fisher': {
+			name: _('fisher'),
+			delay: 10,
+			stores: {
+				'fish': 1.5,
+				'scales': 0.1
+			}
+		},
+        'technician': {
+			name: _('technician'),
+			delay: 10,
+			stores: {
+				'food': -1,
+				'steel': -1,
+				'coal': -1,
+				'sulphur': -1,
+				'energy cell': 1
 			}
 		}
 	},
 	
 	TrapDrops: [
 		{
-			rollUnder: 0.5,
+			rollUnder: 0.35,
 			name: 'fur',
 			message: _('scraps of fur')
 		},
@@ -136,6 +223,7 @@ var Outside = {
 		
 		if(Engine._debug) {
 			this._GATHER_DELAY = 0;
+			this._FORAGE_DELAY = 0;
 			this._TRAPS_DELAY = 0;
 		}
 		
@@ -172,7 +260,9 @@ var Outside = {
 			width: '80px'
 		}).appendTo('div#outsidePanel');
 
+        Outside.updateForageButton();
 		Outside.updateTrapButton();
+        Outside.updateBrickButton();
 	},
 	
 	getMaxPopulation: function() {
@@ -182,16 +272,16 @@ var Outside = {
 	increasePopulation: function() {
 		var space = Outside.getMaxPopulation() - $SM.get('game.population');
 		if(space > 0) {
-			var num = Math.floor(Math.random()*(space/2) + space/2);
+			var num = Math.floor(Math.random()*(space/2));
 			if(num === 0) num = 1;
 			if(num == 1) {
 				Notifications.notify(null, _('a stranger arrives in the night'));
 			} else if(num < 5) {
-				Notifications.notify(null, _('a weathered family takes up in one of the huts.'));
+				Notifications.notify(null, _('a weathered family takes up in one of the huts'));
 			} else if(num < 10) {
-				Notifications.notify(null, _('a small group arrives, all dust and bones.'));
+				Notifications.notify(null, _('a small group arrives, all dust and bones'));
 			} else if(num < 30) {
-				Notifications.notify(null, _('a convoy lurches in, equal parts worry and hope.'));
+				Notifications.notify(null, _('a convoy lurches in, equal parts worry and hope'));
 			} else {
 				Notifications.notify(null, _("the town's booming. word does get around."));
 			}
@@ -448,6 +538,15 @@ var Outside = {
 				Outside.updateVillageRow(k, $SM.get('game.buildings["'+k+'"]'), village);
 			}
 		}
+
+        var food_needed = 0;
+        if (typeof $SM.get('income') != 'undefined' && Engine.activeModule != Space) {
+            for (var source in $SM.get('income')) {
+                food_needed += Math.abs($SM.get('income["'+source+'"].stores.food', true));
+            }
+        }
+        if (food_needed > 0) Outside.updateVillageRow('food needed', food_needed, village);
+
 		/// TRANSLATORS : pop is short for population.
 		population.text(_('pop ') + $SM.get('game.population') + '/' + this.getMaxPopulation());
 		
@@ -480,12 +579,20 @@ var Outside = {
 		var jobMap = {
 			'lodge': ['hunter', 'trapper'],
 			'tannery': ['tanner'],
+			'garden': ['gardener'],
 			'smokehouse': ['charcutier'],
+            'kiln': ['brickmaker'],
 			'iron mine': ['iron miner'],
 			'coal mine': ['coal miner'],
 			'sulphur mine': ['sulphur miner'],
 			'steelworks': ['steelworker'],
-			'armoury' : ['armourer']
+			'armoury' : ['armourer'],
+			'farm' : ['farmer'],
+			'mill' : ['miller'],
+			'bakery' : ['baker'],
+			'lumberyard' : ['woodcutter'],
+            'dock' : ['fisher','smoker'],
+			'power plant' : ['technician']
 		};
 		
 		var jobs = jobMap[name];
@@ -516,6 +623,7 @@ var Outside = {
 				var needsUpdate = false;
 				var curIncome = $SM.getIncome(worker);
 				for(var store in income.stores) {
+                    if (num == 0 && !(store in $SM.get('stores'))) continue;
 					stores[store] = income.stores[store] * num;
 					if(curIncome[store] != stores[store]) needsUpdate = true;
 					var row = $('<div>').addClass('storeRow');
@@ -533,7 +641,41 @@ var Outside = {
 		}
 		Room.updateIncomeView();
 	},
-	
+
+	updateForageButton: function() {
+        if('forage' in $SM.get('stores')) {
+            var btn = $('div#forageButton');
+		    if(btn.length === 0) {
+                new Button.Button({
+			        id: 'forageButton',
+			        text: _("forage food"),
+			        click: Outside.forageFood,
+			        cooldown: Outside._FORAGE_DELAY,
+			        width: '80px'
+		        }).appendTo('div#outsidePanel');
+            } else {
+                Button.setDisabled(btn, false);
+            }
+        }
+	},
+
+    updateBrickButton: function() {
+        if('brick' in $SM.get('stores')) {
+            var btn = $('div#brickButton');
+		    if(btn.length === 0) {
+                new Button.Button({
+			        id: 'brickButton',
+			        text: _("gather stone"),
+			        click: Outside.gatherBrick,
+			        cooldown: Outside._BRICK_DELAY,
+			        width: '80px'
+		        }).appendTo('div#outsidePanel');
+            } else {
+                Button.setDisabled(btn, false);
+            }
+        }
+	},
+
 	updateTrapButton: function() {
 		var btn = $('div#trapsButton');
 		if($SM.get('game.buildings["trap"]', true) > 0) {
@@ -562,16 +704,28 @@ var Outside = {
 			title = _("A Silent Forest");
 		} else if(numHuts == 1) {
 			title = _("A Lonely Hut");
-		} else if(numHuts <= 4) {
-			title = _("A Tiny Village");
 		} else if(numHuts <= 8) {
+			title = _("A Tiny Village");
+		} else if(numHuts <= 15) {
 			title = _("A Modest Village");
-		} else if(numHuts <= 14) {
+		} else if(numHuts <= 25) {
 			title = _("A Large Village");
+		} else if(numHuts <= 50) {
+			title = _("A Quite Hamlet");
+		} else if(numHuts <= 75) {
+			title = _("A Simple Hamlet");
+		} else if(numHuts <= 100) {
+			title = _("A Busy Hamlet");
+		} else if(numHuts <= 250) {
+			title = _("A Tiny Town");
+		} else if(numHuts <= 200) {
+			title = _("A Small Town");
+		} else if(numHuts <= 250) {
+			title = _("A Bustling Town");
 		} else {
-			title = _("A Raucous Village");
-		}
-		
+			title = _("A Raucous City");
+        }
+
 		if(Engine.activeModule == this) {
 			document.title = title;
 		}
@@ -584,6 +738,7 @@ var Outside = {
 			Notifications.notify(Outside, _("the sky is grey and the wind blows relentlessly"));
 			$SM.set('game.outside.seenForest', true);
 		}
+        Outside.updateForageButton();
 		Outside.updateTrapButton();
 		Outside.updateVillage(true);
 
@@ -592,16 +747,37 @@ var Outside = {
 	
 	gatherWood: function() {
 		Notifications.notify(Outside, _("dry brush and dead branches litter the forest floor"));
-		var gatherAmt = $SM.get('game.buildings["cart"]', true) > 0 ? 50 : 10;
+		//var gatherAmt = $SM.get('game.buildings["cart"]', true) > 0 ? 50 : 10;
+		var gatherAmt = ($SM.get('game.buildings["cart"]', true) * (25 + Math.round(25 * Math.random()))) + 5 + Math.round(5 * Math.random());
 		$SM.add('stores.wood', gatherAmt);
 	},
-	
+
+	forageFood: function() {
+		Notifications.notify(Outside, _("roots, seeds, and berries lay hidden in the forest"));
+		var forageAmt = ($SM.get('game.buildings["cart"]', true) * (15 + Math.round(15 * Math.random()))) + 5 + Math.round(5 * Math.random());
+		$SM.add('stores.forage', forageAmt);
+        if (!('wheat' in $SM.get("stores"))) {
+            if (Math.random() > 0.9) {
+                Notifications.notify(Outside, _("a wheat berry, a seed for tomorrow"));
+                $SM.add('stores.wheat', 1);
+            }
+        } else {
+            if (Math.random() > 0.75) $SM.add('stores.wheat', 1);
+        }
+	},
+
+    gatherBrick: function() {
+		Notifications.notify(Outside, _("scour the forest for brick size stones and rocks"));
+		var gatherAmt = ($SM.get('game.buildings["cart"]', true) * (1 + Math.round(1 * Math.random()))) + 1 + Math.round(Math.random());
+		$SM.add('stores.brick', gatherAmt);
+	},
+
 	checkTraps: function() {
 		var drops = {};
 		var msg = [];
 		var numTraps = $SM.get('game.buildings["trap"]', true);
 		var numBait = $SM.get('stores.bait', true);
-		var numDrops = numTraps + (numBait < numTraps ? numBait : numTraps);
+		var numDrops = numTraps + (numBait < 10 * numTraps ? numBait : 10 * numTraps);
 		for(var i = 0; i < numDrops; i++) {
 			var roll = Math.random();
 			for(var j in Outside.TrapDrops) {
@@ -629,7 +805,7 @@ var Outside = {
 			s += msg[l];
 		}
 		
-		var baitUsed = numBait < numTraps ? numBait : numTraps;
+		var baitUsed = numBait < 10 * numTraps ? numBait : 10 * numTraps;
 		drops['bait'] = -baitUsed;
 		
 		Notifications.notify(Outside, s);

@@ -14,7 +14,7 @@ Events.Outside = [
 					_('large prints lead away, into the forest.')
 				],
 				onLoad: function() {
-					var numWrecked = Math.floor(Math.random() * $SM.get('game.buildings["trap"]', true)) + 1;
+					var numWrecked = Math.floor(Math.random() * $SM.get('game.buildings["trap"]', true)/2) + 1;
 					$SM.add('game.buildings["trap"]', -numWrecked);
 					Outside.updateVillage();
 					Outside.updateTrapButton();
@@ -189,7 +189,7 @@ Events.Outside = [
 				],
 				notification: _('epidemic is eradicated eventually'),
 				onLoad: function() {
-					var numKilled = Math.floor(Math.random() * 5) + 2;
+					var numKilled = Math.floor(0.01 * $SM.get('game.population', true) * (1 + Math.random()));
 					Outside.killVillagers(numKilled);
 				},
 				buttons: {
@@ -207,7 +207,7 @@ Events.Outside = [
 				],
 				notification: _('population is almost exterminated'),
 				onLoad: function() {
-					var numKilled = Math.floor(Math.random() * 80) + 10;
+					var numKilled = Math.floor(0.49 * $SM.get('game.population', true) * (1 + Math.random()));
 					Outside.killVillagers(numKilled);
 				},
 				buttons: {
@@ -233,20 +233,36 @@ Events.Outside = [
 					 _('the villagers retreat to mourn the dead.')
 				],
 				notification: _('wild beasts attack the villagers'),
+                outcome: _(''),
 				onLoad: function() {
-					var numKilled = Math.floor(Math.random() * 10) + 1;
+                    var pops = $SM.get('game.population', true);
+					var numKilled  = Math.floor((Math.random() * 0.5 * pops)) + 1;
+                    if ($SM.get('game.buildings["wall"]', true) > 0) numKilled /= 4;
+                    numKilled -= 1 * $SM.get('stores.bone spear', true);
+                    numKilled -= 1 * $SM.get('stores.iron sword', true);
+                    numKilled -= 1 * $SM.get('stores.steel sword', true);
+                    numKilled -= 1 * $SM.get('stores.katana', true);
+                    numKilled -= 1 * $SM.get('stores.bayonet', true);
+                    numKilled -= 2 * $SM.get('stores.rifle', true);
+                    numKilled -= 2 * $SM.get('stores["laser rifle"]', true);
+                    numKilled -= 3 * $SM.get('stores.lightsaber', true);
+                    numKilled = Math.floor(numKilled);
+                    if (numKilled < 0) numKilled = 0;
+                    if (numkilled == 0) this.outcome = 'the beasts were defeated';
+                    else this.outcome = 'predators become prey. price is unfair';
 					Outside.killVillagers(numKilled);
 				},
 				reward: {
 					fur: 100,
 					meat: 100,
+                    scales: 20,
 					teeth: 10
 				},
 				blink: true,
 				buttons: {
 					'end': {
 						text: _('go home'),
-						notification: _('predators become prey. price is unfair'),
+						notification: _(this.outcome),
 						nextScene: 'end'
 					}
 				}
@@ -267,20 +283,36 @@ Events.Outside = [
 					_('after a skirmish they are driven away, but not without losses.')
 				],
 				notification: _('troops storm the village'),
+                outcome: _(''),
 				onLoad: function() {
-					var numKilled = Math.floor(Math.random() * 40) + 1;
+                    var pops = $SM.get('game.population', true);
+					var numKilled = Math.floor(Math.random() * pops) + 1;
+                    if ($SM.get('game.buildings["wall"]', true) > 0) numKilled /= 2;
+                    numKilled -= 0.5 * $SM.get('stores.bone spear', true);
+                    numKilled -= 0.75 * $SM.get('stores.iron sword', true);
+                    numKilled -= 1.0 * $SM.get('stores.steel sword', true);
+                    numKilled -= 1.5 * $SM.get('stores.katana', true);
+                    numKilled -= 1.5 * $SM.get('stores.bayonet', true);
+                    numKilled -= 2.0 * $SM.get('stores.rifle', true);
+                    numKilled -= 3.0 * $SM.get('stores["laser rifle"]', true);
+                    numKilled -= 5.0 * $SM.get('stores.lightsaber', true);
+                    numKilled = Math.floor(numKilled);
+                    if (numKilled < 0) numKilled = 0;
+                    if (numkilled == 0) this.outcome = 'the soldiers retreat back from where they came';
+                    else this.outcome = 'warfare is bloodthirsty';
 					Outside.killVillagers(numKilled);
 				},
 				reward: {
 					bullets: 10,
-					'cured meat': 50
+					'cured meat': 50,
+                    grenade: 1
 				},
 
 				blink: true,
 				buttons: {
 					'end': {
 						text: _('go home'),
-						notification: _('warfare is bloodthirsty'),
+						notification: _(this.outcome),
 						nextScene: 'end'
 					}
 				}

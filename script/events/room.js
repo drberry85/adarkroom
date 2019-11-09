@@ -18,17 +18,17 @@ Events.Room = [
 				buttons: {
 					'buyScales': {
 						text: _('buy scales'),
-						cost: { 'fur': 100 },
+						cost: { 'fur': 10 },
 						reward: { 'scales': 1 }
 					},
 					'buyTeeth': {
 						text: _('buy teeth'),
-						cost: { 'fur': 200 },
+						cost: { 'fur': 20 },
 						reward: { 'teeth': 1 }
 					},
 					'buyBait': {
 						text: _('buy bait'),
-						cost: { 'fur': 5 },
+						cost: { 'meat': 1 },
 						reward: { 'bait': 1 },
 						notification: _('traps are more effective with bait.')
 					},
@@ -65,7 +65,7 @@ Events.Room = [
 				buttons: {
 					'investigate': {
 						text: _('investigate'),
-						nextScene: { 0.3: 'stuff', 1: 'nothing' }
+						nextScene: { 0.5: 'stuff', 1: 'nothing' }
 					},
 					'ignore': {
 						text: _('ignore them'),
@@ -208,7 +208,7 @@ Events.Room = [
 					'100furs': {
 						text: _('give 100'),
 						cost: {fur: 100},
-						nextScene: { 0.5: 'teeth', 0.8: 'scales', 1: 'cloth' }
+						nextScene: { 0.5: 'iron', 0.8: 'coal', 1: 'steel' }
 					},
 					'deny': {
 						text: _('turn him away'),
@@ -247,6 +247,45 @@ Events.Room = [
 				text: [
 					_('the beggar expresses his thanks.'),
 					_('leaves some scraps of cloth behind.')
+				],
+				buttons: {
+					'leave': {
+						text: _('say goodbye'),
+						nextScene: 'end'
+					}
+				}
+			},
+            iron: {
+				reward: { iron: 20 },
+				text: [
+					_('the beggar expresses his thanks.'),
+					_('leaves some scrap iron behind.')
+				],
+				buttons: {
+					'leave': {
+						text: _('say goodbye'),
+						nextScene: 'end'
+					}
+				}
+			},
+			coal: {
+				reward: { coal: 20 },
+				text: [
+					_('the beggar expresses his thanks.'),
+					_('leaves some leaves some lumps of coal.')
+				],
+				buttons: {
+					'leave': {
+						text: _('say goodbye'),
+						nextScene: 'end'
+					}
+				}
+			},
+			steel: {
+				reward: { steel: 20 },
+				text: [
+					_('the beggar expresses his thanks.'),
+					_('leaves some bits of steel behind.')
 				],
 				buttons: {
 					'leave': {
@@ -300,7 +339,7 @@ Events.Room = [
 				notification: _('the shady builder builds a hut'),
 				onLoad: function() {
 					var n = $SM.get('game.buildings["hut"]', true);
-					if(n < 20){
+					if(n < 500){
 						$SM.set('game.buildings["hut"]',n+1);
 					}
 				},
@@ -356,7 +395,7 @@ Events.Room = [
 					}, 'Room[4].scenes.wood100.action', delay);
 				},
 				onLoad: function() {
-					if(Math.random() < 0.5) {
+					if(Math.random() < 0.6) {
 						this.action(60);
 					}
 				},
@@ -379,7 +418,7 @@ Events.Room = [
 					}, 'Room[4].scenes.wood500.action', delay);
 				},
 				onLoad: function() {
-					if(Math.random() < 0.3) {
+					if(Math.random() < 0.75) {
 						this.action(60);
 					}
 				},
@@ -435,7 +474,7 @@ Events.Room = [
 					}, 'Room[5].scenes.fur100.action', delay);
 				},
 				onLoad: function() {
-					if(Math.random() < 0.5) {
+					if(Math.random() < 0.6) {
 						this.action(60);
 					}
 				},
@@ -458,7 +497,7 @@ Events.Room = [
 					}, 'Room[5].scenes.fur500.action', delay);
 				},
 				onLoad: function() {
-					if(Math.random() < 0.3) {
+					if(Math.random() < 0.75) {
 						this.action(60);
 					}
 				},
@@ -497,7 +536,7 @@ Events.Room = [
 					},
 					'learn': {
 						text: _('learn scouting'),
-						cost: { 'fur': 1000, 'scales': 50, 'teeth': 20 },
+						cost: { 'fur': 500, 'scales': 50, 'teeth': 20 },
 						available: function() {
 							return !$SM.hasPerk('scout');
 						},
@@ -605,7 +644,7 @@ Events.Room = [
 						text: _('give 1 medicine'),
 						cost: { 'medicine': 1 },
 						notification: _('the man swallows the medicine eagerly'),
-						nextScene: { 0.1: 'alloy', 0.3: 'cells', 0.5: 'scales', 1.0: 'nothing' }
+						nextScene: { 0.2: 'alloy', 0.5: 'cells', 0.99: 'steel', 1.0: 'nothing' }
 					},
 					'ignore': {
 						text: _('tell him to leave'),
@@ -645,14 +684,14 @@ Events.Room = [
 					}
 				}
 			},
-			'scales': {
+			'steel': {
 				text: [
 					_("the man is thankful."),
 					_('he leaves a reward.'),
-					_('all he has are some scales.')
+					_('all he has are some scraps of steel.')
 				],
 				onLoad: function() {
-					$SM.add('stores.scales', 5);
+					$SM.add('stores.steel', 30);
 				},
 				buttons: {
 					'bye': {
