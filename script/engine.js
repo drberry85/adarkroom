@@ -552,6 +552,7 @@
 				$('.hyper').text(_('hyper.'));
 
 			$SM.set('config.hyperMode', Engine.options.doubleTime, false);
+            Engine.log('hyper');
 		},
 
 		// Gets a guid
@@ -784,7 +785,7 @@
 
 		setInterval: function(callback, interval, skipDouble){
 			if( Engine.options.doubleTime && !skipDouble ){
-				Engine.log('Double time, cutting interval in half');
+				//Engine.log('Double time, cutting interval in half');
 				interval /= 2;
 			}
 
@@ -795,7 +796,7 @@
 		setTimeout: function(callback, timeout, skipDouble){
 
 			if( Engine.options.doubleTime && !skipDouble ){
-				Engine.log('Double time, cutting timeout in half');
+				//Engine.log('Double time, cutting timeout in half');
 				timeout /= 2;
 			}
 
